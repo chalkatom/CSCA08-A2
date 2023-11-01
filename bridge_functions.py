@@ -127,12 +127,6 @@ def get_bridge(bridge_data: list[list], bridge_id: int) -> list:
 
     """
 
-    id = 0
-    for i in range(len(bridge_data)):
-        id = i + 1
-        bridge_data[i][ID_INDEX] = id
-
-
     if bridge_id in range(len(bridge_data)):
         return bridge_data[bridge_id - 1]
     else:
@@ -217,11 +211,16 @@ def format_data(data: list[list[str]]) -> None:
     True
 
     """
+    id = 0
+    for i in range(len(data)):
+        id = i + 1
+        data[i][ID_INDEX] = id
 
-    format_location(data)
-    format_spans(data)
-    format_length(data)
-    format_bcis(data)
+    for sublist in data:
+        format_location(sublist)
+        format_length(sublist)
+        format_bcis(sublist)
+        format_spans(sublist)
 
 
 # This is a suggested helper function for format_data. We provide the
@@ -272,9 +271,9 @@ def format_spans(bridge_record: list) -> None:
     bridge_record[NUM_SPANS_INDEX] = int(bridge_record[NUM_SPANS_INDEX])
 
     span_details = []
-    bridge_record[SPAN_DETAILS_INDEX] = bridge_record[SPAN_DETAILS_INDEX].split('=')
+    bridge_record[SPAN_DETAILS_INDEX] = bridge_record[SPAN_DETAILS_INDEX].split(FROM_SEP)
     for ele in bridge_record[SPAN_DETAILS_INDEX]:
-        if ';' in ele:
+        if TO_SEP in ele:
             span_details.append(float(ele[0:ele.index(';')]))
     bridge_record[SPAN_DETAILS_INDEX] = span_details
 
@@ -344,10 +343,9 @@ def format_bcis(bridge_record: list) -> None:
     """
 
     bcis_list = []
-    for ele in bridge_record[BCIS_INDEX:]:
+    for ele in bridge_record[BCIS_INDEX + 1:]:
         if is_float(ele):
-            if float(ele) not in bcis_list:
-                bcis_list.append(float(ele))
+            bcis_list.append(float(ele))
 
     bridge_record[BCIS_INDEX:] = [bcis_list]
 
