@@ -127,10 +127,33 @@ def get_bridge(bridge_data: list[list], bridge_id: int) -> list:
 
     """
 
-    if bridge_id in range(len(bridge_data)):
-        return bridge_data[bridge_id - 1]
-    else:
-        return []
+    for i in range(len(bridge_data)):
+        if bridge_id == bridge_data[i][ID_INDEX]:
+            return bridge_data[bridge_id - 1]
+    return []
+
+
+def get_average_bci(bridge_data: list[list], bridge_id: int) -> float:
+    """Return the average BCI for the bridge with id 'bridge_id' from 
+    bridge data 'bridge_data'. If there is no bridge with the given id
+    or the bridge has no BCIs, return 0.
+
+    >>> get_average_bci(THREE_BRIDGES, 1)
+    70.8857
+    >>> get_average_bci(THREE_BRIDGES, 4)
+    0
+    >>> lst = [[1, 'Highway 24 Underpass at Highway 403', '403',
+    ...    43.167233, -80.275567, '1965', '2014', '2009', 4,
+    ...    [12.0, 19.0, 21.0, 12.0], 65.0, '04/13/2012']]
+    >>> get_average_bci(list, 1)
+    0
+    """
+
+    try:
+        bci = get_bridge(bridge_data, bridge_id)[BCIS_INDEX:][0]
+        return round(sum(bci)/len(bci), 4)
+    except:
+        return 0
 
 
 # We provide the header and doctring for this function to help get you started.
