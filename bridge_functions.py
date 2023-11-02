@@ -156,6 +156,67 @@ def get_average_bci(bridge_data: list[list], bridge_id: int) -> float:
         return 0
 
 
+def get_total_length_on_hwy(bridge_data: list[list], highway: str) -> float:
+    """Return the total length of bridges from bridge_data on given highway 'highway'.
+    If there are no bridges on the highway, return 0.
+
+    >>> get_total_length_on_hwy(THREE_BRIDGES, '403')
+    126.0
+    >>> get_total_length_on_hwy(THREE_BRIDGES, '6')
+    18.4
+    >>> get_total_length_on_hwy(THREE_BRIDGES, '91')
+    0
+    """
+
+    total = 0
+
+    for subdata in bridge_data:
+        if subdata[HIGHWAY_INDEX] == highway:
+            total += float(subdata[LENGTH_INDEX])
+    return total
+
+
+def get_distance_between(bridge1: list, bridge2: list) -> float:
+    """Return the distance between bridge 'bridge1' and bridge 'bridge2' in kilometers,
+    rounded to the nearest metre, between them. 
+
+     >>> get_distance_between(get_bridge(THREE_BRIDGES, 1), get_bridge(THREE_BRIDGES, 2))
+     1.968
+     >>> get_distance_between(get_bridge(THREE_BRIDGES, 1), get_bridge(THREE_BRIDGES, 3))
+     224.451
+     >>> get_distance_between(get_bridge(THREE_BRIDGES, 1), get_bridge(THREE_BRIDGES, 1))
+     0.0
+    """
+    return calculate_distance(bridge1[LAT_INDEX], bridge1[LON_INDEX], 
+                              bridge2[LAT_INDEX], bridge2[LON_INDEX])
+
+
+def get_closet_bridge(bridge_data: list[list], bridge_id: int) -> int:
+    """Return the bridge id of the bridge in 'bridge_data', closest to the bridge with 
+    bridge id 'bridge_id' in the same set of bridges in bridge data.
+
+    Precondition: bridge_data contains bridge with bridge_id and len(bridge_data) >= 2
+
+    >>> get_closet_bridge(THREE_BRIDGES, 2)
+    1
+    >>> get_closet_bridge(THREE_BRIDGES, 1)
+    2
+    >>> get_closet_bridge(THREE_BRIDGES, 3)
+    1
+    """
+
+    b2 = get_bridge(bridge_data, bridge_id)
+    id_dist = {}
+
+    for i in range(len(bridge_data)):
+        if get_distance_between(bridge_data[i], b2) != 0:
+            id_dist.update({bridge_data[i][ID_INDEX]:[]})
+            id_dist[bridge_data[i][ID_INDEX]].append(
+                get_distance_between(bridge_data[i], b2))
+    return list(id_dist.keys())[list(id_dist.values()).index(min(
+        id_dist.values()))]
+
+
 # We provide the header and doctring for this function to help get you started.
 def assign_inspectors(bridge_data: list[list], inspectors: list[list[float]],
                       max_bridges: int) -> list[list[int]]:
