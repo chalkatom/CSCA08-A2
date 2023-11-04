@@ -127,8 +127,8 @@ def get_bridge(bridge_data: list[list], bridge_id: int) -> list:
 
     """
 
-    for i in range(len(bridge_data)):
-        if bridge_id == bridge_data[i][ID_INDEX]:
+    for subdata in bridge_data:
+        if bridge_id == subdata[ID_INDEX]:
             return bridge_data[bridge_id - 1]
     return []
 
@@ -145,20 +145,20 @@ def get_average_bci(bridge_data: list[list], bridge_id: int) -> float:
     >>> lst = [[1, 'Highway 24 Underpass at Highway 403', '403',
     ...    43.167233, -80.275567, '1965', '2014', '2009', 4,
     ...    [12.0, 19.0, 21.0, 12.0], 65.0, '04/13/2012']]
-    >>> get_average_bci(list, 1)
+    >>> get_average_bci(lst, 1)
     0
     """
 
     try:
         bci = get_bridge(bridge_data, bridge_id)[BCIS_INDEX:][0]
-        return round(sum(bci)/len(bci), 4)
-    except:
+        return round(sum(bci) / len(bci), 4)
+    except IndexError:
         return 0
 
 
 def get_total_length_on_hwy(bridge_data: list[list], highway: str) -> float:
-    """Return the total length of bridges from bridge_data on given highway 'highway'.
-    If there are no bridges on the highway, return 0.
+    """Return the total length of bridges from bridge_data on given highway
+    'highway'. If there are no bridges on the highway, return 0.
 
     >>> get_total_length_on_hwy(THREE_BRIDGES, '403')
     126.0
@@ -177,8 +177,8 @@ def get_total_length_on_hwy(bridge_data: list[list], highway: str) -> float:
 
 
 def get_distance_between(bridge1: list, bridge2: list) -> float:
-    """Return the distance between bridge 'bridge1' and bridge 'bridge2' in kilometers,
-    rounded to the nearest metre, between them. 
+    """Return the distance between bridge 'bridge1' and bridge 'bridge2'
+    in kilometers, rounded to the nearest metre, between them. 
 
      >>> get_distance_between(get_bridge(THREE_BRIDGES, 1), get_bridge(THREE_BRIDGES, 2))
      1.968
@@ -187,15 +187,16 @@ def get_distance_between(bridge1: list, bridge2: list) -> float:
      >>> get_distance_between(get_bridge(THREE_BRIDGES, 1), get_bridge(THREE_BRIDGES, 1))
      0.0
     """
-    return calculate_distance(bridge1[LAT_INDEX], bridge1[LON_INDEX], 
+    return calculate_distance(bridge1[LAT_INDEX], bridge1[LON_INDEX],
                               bridge2[LAT_INDEX], bridge2[LON_INDEX])
 
 
 def get_closet_bridge(bridge_data: list[list], bridge_id: int) -> int:
-    """Return the bridge id of the bridge in 'bridge_data', closest to the bridge with 
-    bridge id 'bridge_id' in the same set of bridges in bridge data.
+    """Return the bridge id of the bridge in 'bridge_data', closest to the
+    bridge with bridge id 'bridge_id' in the same set of bridges in bridge data.
 
-    Precondition: bridge_data contains bridge with bridge_id and len(bridge_data) >= 2
+    Precondition: bridge_data contains bridge with bridge_id 
+    and len(bridge_data) >= 2
 
     >>> get_closet_bridge(THREE_BRIDGES, 2)
     1
@@ -208,13 +209,84 @@ def get_closet_bridge(bridge_data: list[list], bridge_id: int) -> int:
     b2 = get_bridge(bridge_data, bridge_id)
     id_dist = {}
 
-    for i in range(len(bridge_data)):
-        if get_distance_between(bridge_data[i], b2) != 0:
-            id_dist.update({bridge_data[i][ID_INDEX]:[]})
-            id_dist[bridge_data[i][ID_INDEX]].append(
-                get_distance_between(bridge_data[i], b2))
+    for subdata in bridge_data:
+        if get_distance_between(subdata, b2) != 0:
+            id_dist.update({subdata[ID_INDEX]: []})
+            id_dist[subdata[ID_INDEX]].append(
+                get_distance_between(subdata, b2))
     return list(id_dist.keys())[list(id_dist.values()).index(min(
         id_dist.values()))]
+
+
+def get_bridges_in_radius(bridge_data: list[list], lat: float,
+                          lon: float, radius: float) -> list[int]:
+    """Return a list of bridge ids from bridge data'bridge_data, whose 
+    bridges' latitude 'lat' and longitude 'lon', are within distance 
+    of radius 'radius'.
+
+    >>> get_bridges_in_radius(THREE_BRIDGES, 43.10, -80.15, 50)
+    [1, 2]
+    >>> get_bridges_in_radius(THREE_BRIDGES, 45.00, -81.00, 34)
+    [3]
+    >>> get_bridges_in_radius(THREE_BRIDGES, 45.00, -81.00, 30)
+    []
+    """
+
+    ids = []
+
+    lad = lat - radius * 0.01
+    lau = lat + radius * 0.01
+    lod = lon - radius * 0.01
+    lou = lon + radius * 0.01
+
+    for subdata in bridge_data:
+        if ((lad <= subdata[LAT_INDEX] <= lau)
+                and (lod <= subdata[LON_INDEX] <= lou)):
+            ids.append(subdata[ID_INDEX])
+    return ids
+
+
+def bci_index_check(bridge_data: list[list]) -> bool:
+    """Return true if all bridges in 'bridge_data' have an element at
+    index 'BCIS_INDEX'.
+
+    >>> bci_index_check([[2, 1, 2], [1, 2, 3]])
+    False
+    >>> bci_index_check(THREE_BRIDGES)
+    True
+    """
+
+    for subdata in bridge_data:
+        try:
+            subdata[BCIS_INDEX]
+        except IndexError:
+            return False
+    return True
+
+
+def get_bridges_with_bci_below(bridge_data: list[list], bridge_ids: list[int],
+                               bci: float) -> list[int]:
+    """Return a list of bridge ids of all bridges in 'bridge_data', 
+    whose ids are in the list of ids 'bridge_ids', and whose BCI is less than
+    or equal to the given BCI 'bci'.
+
+    >>> get_bridges_with_bci_below(THREE_BRIDGES, [1, 2], 72)
+    [2]
+    >>> get_bridges_with_bci_below(THREE_BRIDGES, [1, 2, 3], 73)
+    [1, 2]
+    >>> get_bridges_with_bci_below(THREE_BRIDGES, [3], 75)
+    []
+    >>> get_bridges_with_bci_below([[2, 1, 2], [1, 2, 3]], [2, 3], 72)
+    []
+    """
+
+    bciid = []
+
+    for subdata in bridge_data:
+        if (subdata[ID_INDEX] in bridge_ids and bci_index_check(bridge_data)):
+            if subdata[BCIS_INDEX][0] <= bci:
+                bciid.append(subdata[ID_INDEX])
+    return bciid
 
 
 # We provide the header and doctring for this function to help get you started.
@@ -295,10 +367,10 @@ def format_data(data: list[list[str]]) -> None:
     True
 
     """
-    id = 0
+    idd = 0
     for i in range(len(data)):
-        id = i + 1
-        data[i][ID_INDEX] = id
+        idd = i + 1
+        data[i][ID_INDEX] = idd
 
     for sublist in data:
         format_location(sublist)
@@ -355,7 +427,8 @@ def format_spans(bridge_record: list) -> None:
     bridge_record[NUM_SPANS_INDEX] = int(bridge_record[NUM_SPANS_INDEX])
 
     span_details = []
-    bridge_record[SPAN_DETAILS_INDEX] = bridge_record[SPAN_DETAILS_INDEX].split(FROM_SEP)
+    ph = SPAN_DETAILS_INDEX
+    bridge_record[SPAN_DETAILS_INDEX] = bridge_record[ph].split(FROM_SEP)
     for ele in bridge_record[SPAN_DETAILS_INDEX]:
         if TO_SEP in ele:
             span_details.append(float(ele[0:ele.index(';')]))
@@ -402,7 +475,7 @@ def is_float(text: str) -> bool:
     try:
         float(text)
         return True
-    except:
+    except ValueError:
         return False
 
 
