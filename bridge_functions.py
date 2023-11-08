@@ -289,6 +289,27 @@ def get_bridges_with_bci_below(bridge_data: list[list], bridge_ids: list[int],
     return bciid
 
 
+def get_bridges_containing(bridge_data: list[list], search: str) -> list[int]:
+    """Return a list of bridge IDs from bridge data 'bridge_data', 
+    whose names contain the search string 'search' (the search string is not
+    case-sensitive).
+
+    >>> get_bridges_containing(THREE_BRIDGES, 'underpass')
+    [1, 2]
+    >>> get_bridges_containing(THREE_BRIDGES, 'pass')
+    [1, 2]
+    >>> get_bridges_containing(THREE_BRIDGES, 'river')
+    [3]
+    """
+
+    id_list = []
+
+    for subdata in bridge_data:
+        if search.lower() in subdata[NAME_INDEX].lower():
+            id_list.append(subdata[ID_INDEX])
+    return id_list
+
+
 # We provide the header and doctring for this function to help get you started.
 def assign_inspectors(bridge_data: list[list], inspectors: list[list[float]],
                       max_bridges: int) -> list[list[int]]:
@@ -352,7 +373,43 @@ def inspect_bridges(bridge_data: list[list], bridge_ids: list[int], date: str,
 
     """
 
-    pass
+    for subdata in bridge_data:
+        if bridge_ids[0] == subdata[ID_INDEX]:
+            subdata[LAST_INSPECTED_INDEX] = date
+            subdata[BCIS_INDEX].insert(0, bci)
+
+
+def add_rehab(bridge_data: list[list], bridge_id: int, date: str,
+              rehab_status: bool) -> None:
+    """Update the bridges in 'bridge_data' with id in 'bridge_id' with the
+    new rehab year record from 'date'. The year of major rehab will be updated
+    if rehab status 'rehab_status' is True. And the year of minor rehab will be
+    updated if rehab status 'rehab_status' is False.
+    
+    If there is no bridge with the given id in the given bridge data,
+    the function has no effect.
+    
+    >>> bridge = deepcopy(THREE_BRIDGES)
+    >>> add_rehab(bridge, 1, '09/15/2023', False)
+    >>> bridge == [
+    ...   [1, 'Highway 24 Underpass at Highway 403', '403',
+    ...    43.167233, -80.275567, '1965', '2014', '2023', 4,
+    ...    [12.0, 19.0, 21.0, 12.0], 65.0, '04/13/2012',
+    ...    [72.3, 69.5, 70.0, 70.3, 70.5, 70.7, 72.9]],
+    ...   [2, 'WEST STREET UNDERPASS', '403', 43.164531, -80.251582,
+    ...    '1963', '2014', '2007', 4, [12.2, 18.0, 18.0, 12.2],
+    ...    61.0, '04/13/2012', [71.5, 68.1, 69.0, 69.4, 69.4, 70.3, 73.3]],
+    ...   [3, 'STOKES RIVER BRIDGE', '6', 45.036739, -81.33579,
+    ...    '1958', '2013', '', 1, [16.0], 18.4, '08/28/2013',
+    ...   [85.1, 67.8, 67.4, 69.2, 70.0, 70.5, 75.1, 90.1]]]
+    True
+    """
+    for subdata in bridge_data:
+        if subdata[ID_INDEX] == bridge_id:
+            if rehab_status:
+                subdata[LAST_MAJOR_INDEX] = date[6:]
+            else:
+                subdata[LAST_MINOR_INDEX] = date[6:]
 
 
 # We provide the header and doctring for this function to help get you started.
@@ -514,7 +571,7 @@ if __name__ == '__main__':
     # To test your code with larger lists, you can uncomment the code below to
     # read data from the provided CSV file.
     # with open('bridge_data.csv', encoding='utf-8') as bridge_data_file:
-    #     BRIDGES = read_data(bridge_data_file)
+    #    BRIDGES = read_data(bridge_data_file)
     # format_data(BRIDGES)
 
     # For example:
